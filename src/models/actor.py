@@ -31,26 +31,29 @@ class Actor(nn.Module):
         log_std = self.log_std_linear(x)
         log_std = torch.clamp(log_std, self.log_std_min, self.log_std_max)
         
-        dist = Normal(mean, log_std.exp())
-        return dist
+        
+        return mean, log_std
     
     def evaluate(self, state, goal, epsilon=1e-6):
-        dist = self.forward(state, goal)
-
-        action = torch.tanh(dist.sample())
-
+        mean, log_std = self.forward(state, goal)
+        std = log_std.exp()
+        normal = Normal(0, 1)
+        z = normal.sample()
+        action = torch.tanh(mean + std * z)
         #''''torch.log(1 - action.pow(2) + epsilon'''' is an adjustment that compensates for the squeezing of the tanh transformation
-        log_prob = dist.log_prob(action)
-        log_prob = log_prob.sum(dim=-1)
-        #log_prob = log_prob - torch.log(1 - action.pow(2) + epsilon).sum(dim=-1)
+        log_prob = Normal(mean, std).log_prob(mean+ std*z) - torch.log(1 - action.pow(2) + epsilon)
         
         return action, log_prob
     
     def get_action(self, state, goal):
         state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         goal = torch.FloatTensor(goal).unsqueeze(0).to(self.device)
-        dist = self.forward(state, goal)
-        action = torch.tanh(dist.sample())
+        
+        mean, log_std = self.forward(state, goal)
+        std = log_std.exp()
+        normal = Normal(0, 1)
+        z = normal.sample()
+        action = torch.tanh(mean + std * z)
 
         action = action.cpu().detach().numpy()
         return action[0]

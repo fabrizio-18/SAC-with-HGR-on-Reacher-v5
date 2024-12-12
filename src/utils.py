@@ -24,8 +24,3 @@ def plot(vec, plot_type):
     plt.show()
 
 
-def get_reward(achieved_goal, goal):
-        distance = torch.norm(achieved_goal - goal)
-        reward = 0 if distance < 0.05 else -1
-
-        return reward

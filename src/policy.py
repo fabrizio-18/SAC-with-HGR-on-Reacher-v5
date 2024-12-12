@@ -2,7 +2,7 @@ import gymnasium as gym
 import torch
 import torch.nn as nn
 from models.SAC import SAC
-from models.replayBuffer import ReplayBuffer
+from models.replayBuffer import PrioritizedHERReplayBuffer
 from utils import *
 
 
@@ -16,12 +16,12 @@ class Policy(nn.Module):
         self.state_size = self.env.observation_space['observation'].shape[0]
         self.goal_size = self.env.observation_space['desired_goal'].shape[0]
         self.action_size = self.env.action_space.shape[0]
-        self.buffer = ReplayBuffer()
+        self.buffer = PrioritizedHERReplayBuffer(1500000, self.state_size, self.action_size, self.goal_size, reward_fun=self.reward_fun)
         self.gamma = 0.98
         self.tau = 0.01
         self.hidden_size = 256
         self.lr = 1e-3
-        self.sac = SAC(self.env, self.state_size, self.action_size, self.goal_size, self.buffer, self.gamma, self.tau, self.hidden_size, self.lr, self.device)
+        self.sac = SAC(self.env, self.state_size, self.action_size, self.goal_size, self.buffer, self.gamma, self.tau, self.hidden_size, self.lr, self.device, self.reward_fun)
         self.env.reset()
         
         
@@ -34,7 +34,7 @@ class Policy(nn.Module):
         #print(rewards, losses)
         self.save()
         plot(rewards, 'reward')
-        plot(losses, 'loss')
+        plot(losses.detach().numpy(), 'loss')
 
         
     
@@ -48,5 +48,9 @@ class Policy(nn.Module):
         ret = super().to(device)
         ret.device = device
         return ret
+    
+    def reward_fun(self, achieved_goal, desired_goal, info):  # vectorized
+        return self.env.env.env.env.compute_reward(achieved_goal, desired_goal, info=info)
+    
 
 
