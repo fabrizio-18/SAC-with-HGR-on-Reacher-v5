@@ -1,0 +1,6 @@
+numpy==1.16.0
+baselines
+scipy
+tensorboardX
+mpi4py
+tqdm
