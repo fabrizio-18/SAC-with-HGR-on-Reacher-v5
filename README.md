@@ -1,1 +1,1 @@
-# SAC+HGR on 7-DOF Fetch Robotic arm
+# SAC+HGR on 7-DOF on Reacher-v5
