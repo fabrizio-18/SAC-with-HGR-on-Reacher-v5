@@ -45,8 +45,8 @@ class HGRReplayBuffer:
 
         self._max_transition_priority = 1.0
 
-        self.alpha = 0.4
-        self.beta = 0.2
+        self.alpha = 0.3
+        self.beta = 0.3
 
         self.lock = threading.Lock()
 

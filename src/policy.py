@@ -34,24 +34,28 @@ class Policy(nn.Module):
         #self.buffer = replayBuffer.ReplayBuffer(obs_shape=self.obs_shape, action_shape=self.action_shape, capacity=1500000, device=self.device)
         
         #### if you want to use HER buffer ####
-        #self.buffer = HER_buffer.HERReplayBuffer(obs_shape=self.obs_shape, action_shape=self.action_shape, goal_shape=self.goal_shape, capacity=1500000, device=self.device, max_episode_steps=self.max_episode_steps)
+        self.buffer = HER_buffer.HERReplayBuffer(obs_shape=self.obs_shape, action_shape=self.action_shape, goal_shape=self.goal_shape, capacity=1500000, device=self.device, max_episode_steps=self.max_episode_steps)
         
         #### if you want to use HGR buffer ####
-        self.buffer = HGR_buffer.HGRReplayBuffer(obs_shape=self.obs_shape, action_shape=self.action_shape, goal_shape=self.goal_shape, capacity=1500000, device=self.device, max_episode_steps=self.max_episode_steps)
+        #self.buffer = HGR_buffer.HGRReplayBuffer(obs_shape=self.obs_shape, action_shape=self.action_shape, goal_shape=self.goal_shape, capacity=1500000, device=self.device, max_episode_steps=self.max_episode_steps)
         self.step = 0
         self.env.reset()
         
         
-    def train(self, train_steps=30000, eval_step=100):
+    def train(self, train_steps=30000, eval_step=30):
         episode = 0
+        episode_eval = 0
         episode_reward = 0
         done = True
         print("Training started...")
         start_time = time.time()
         success_count = 0
+        success_count_eval = 0
         rewards = []
+        rewards_eval = []
         critic_losses = []
         success_rates = []
+        success_rates_eval = []
         episodes = []
 
         while self.step < train_steps:
@@ -111,23 +115,31 @@ class Policy(nn.Module):
                 critic_losses.append(critic_loss)
                 success_rates.append(success_rate)
                 episodes.append(self.step)
+
+                #evaluate agent 
+                if self.step % eval_step == 0:
+                    print("Periodic agent evaluation...")
+                    success_eval, avg_reward = self.evaluate()
+                    rewards_eval.append(avg_reward)
+                    success_count_eval += success_eval
+                    episode_eval += 1
+                    success_rate_eval = success_count_eval / episode_eval if episode_eval > 0 else 0
+                    success_rates_eval.append(success_rate_eval)
                 if self.step % 100 == 0:
-                    print(f"Epoch: {self.step +1}, Critic Loss: {critic_loss:.4f}, Episode Reward: {episode_reward:.4f}, "
-                          f"Rollout Episode: {episode}, Success Rate: {success_rate:.4f}, Time: {time.time() - start_time:.4f}")
+                    print(f"Epoch: {self.step}, Critic Loss: {critic_loss:.4f}, Episode Reward: {episode_reward:.4f}, "
+                          f"Rollout Episode: {episode}, Success Rate Train: {success_rate:.4f}, Success Rate Eval: {success_rate_eval:.4f}, Time: {time.time() - start_time:.4f}")
             
             
 
-            #evaluate agent 
-            if self.step % eval_step == 0:
-                print("Periodic agent evaluation...")
-                self.evaluate()
+            
 
             self.step += 1
             self.epsilon *= self.eps_dacay
         print(f"Training complete.")
         
         #save_plots(rewards, critic_losses, success_rates, episodes, output_dir='simple_buffer_plots')
-        save_plots(rewards, critic_losses, success_rates, episodes, output_dir='HGR_buffer_plots')
+        save_plots(rewards, critic_losses, success_rates, episodes, rewards_eval, success_rates_eval, output_dir='HER_buffer_plots')
+        #save_plots(rewards, critic_losses, success_rates, episodes, rewards_eval, success_rates_eval, output_dir='HGR_buffer_plots')
 
     def evaluate(self, eval_episodes=3):
         avg_reward = 0
@@ -147,8 +159,10 @@ class Policy(nn.Module):
                 episode_step +=1
             #print(info)
             avg_reward += episode_reward
+        success = self.isSuccess(info=info)
         avg_reward = avg_reward/eval_episodes
         print(f'Average reward of evaluation at step {self.step}: {avg_reward:.4f}')
+        return int(success), avg_reward
 
     def isSuccess(self, info, treshold=0.05):
         if np.abs(info['reward_dist']) < treshold:

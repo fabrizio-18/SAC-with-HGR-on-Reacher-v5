@@ -247,7 +247,7 @@ class MinSegmentTree(SegmentTree):
 
 
 
-def save_plots(rewards, critic_losses, success_rates, episodes, output_dir='plots', smooth_window=300, save_data=True):
+def save_plots(rewards, critic_losses, success_rates, episodes, rewards_eval, success_rates_eval, output_dir='plots', smooth_window=300, save_data=True, eval_interval=30):
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
 
@@ -257,17 +257,27 @@ def save_plots(rewards, critic_losses, success_rates, episodes, output_dir='plot
         np.save(os.path.join(output_dir, "critic_losses.npy"), critic_losses)
         np.save(os.path.join(output_dir, "success_rates.npy"), success_rates)
         np.save(os.path.join(output_dir, "episodes.npy"), episodes)
+        np.save(os.path.join(output_dir, "rewards_eval.npy"), rewards_eval)
+        np.save(os.path.join(output_dir, "success_rates_eval.npy"), success_rates_eval)
 
         # Optionally, save as CSV for easier viewing
         np.savetxt(os.path.join(output_dir, "rewards.csv"), rewards, delimiter=',')
         np.savetxt(os.path.join(output_dir, "critic_losses.csv"), critic_losses, delimiter=',')
         np.savetxt(os.path.join(output_dir, "success_rates.csv"), success_rates, delimiter=',')
         np.savetxt(os.path.join(output_dir, "episodes.csv"), episodes, delimiter=',')
+        np.savetxt(os.path.join(output_dir, "rewards_eval.csv"), rewards_eval, delimiter=',')
+        np.savetxt(os.path.join(output_dir, "success_rates_eval.csv"), success_rates_eval, delimiter=',')
 
     def smooth(data, window):
         """Calculate moving average and standard deviation."""
         smoothed = np.array([np.mean(data[max(0, i - window + 1):i + 1]) for i in range(len(data))])
         std = np.array([np.std(data[max(0, i - window + 1):i + 1]) for i in range(len(data))])
+        return smoothed, std
+    
+    def smooth_eval(data, eval_window=10):
+        """Calculate moving average and standard deviation for evaluation metrics."""
+        smoothed = np.array([np.mean(data[max(0, i - eval_window + 1):i + 1]) for i in range(len(data))])
+        std = np.array([np.std(data[max(0, i - eval_window + 1):i + 1]) for i in range(len(data))])
         return smoothed, std
 
     # Smooth rewards
@@ -313,6 +323,34 @@ def save_plots(rewards, critic_losses, success_rates, episodes, output_dir='plot
     plt.title("Success Rate During Training")
     plt.legend()
     plt.savefig(os.path.join(output_dir, "success_rate.png"))
+    plt.close()
+
+    eval_episodes = np.arange(eval_interval, len(rewards_eval) * eval_interval + 1, eval_interval)
+
+    smoothed_rewards_eval, reward_eval_std = smooth_eval(rewards_eval, eval_window=3)
+    smoothed_success_eval, success_eval_std = smooth_eval(success_rates_eval, eval_window=3)
+    # Plot evaluation rewards
+    plt.figure()
+    plt.plot(eval_episodes, rewards_eval, label="Evaluation Reward", alpha=0.2, color='purple')
+    plt.plot(eval_episodes, smoothed_rewards_eval, label="Moving Average Evaluation Reward", color='purple')
+    plt.fill_between(eval_episodes, smoothed_rewards_eval - reward_eval_std, smoothed_rewards_eval + reward_eval_std, color='purple', alpha=0.1)
+    plt.xlabel("Training Epochs")
+    plt.ylabel("Reward")
+    plt.title("Evaluation Rewards")
+    plt.legend()
+    plt.savefig(os.path.join(output_dir, "evaluation_rewards.png"))
+    plt.close()
+
+    # Plot evaluation success rates
+    plt.figure()
+    plt.plot(eval_episodes, success_rates_eval, label="Evaluation Reward", alpha=0.2, color='red')
+    plt.plot(eval_episodes, smoothed_success_eval, label="Moving Average Evaluation Success Rate", color='red')
+    plt.fill_between(eval_episodes, smoothed_success_eval - success_eval_std, smoothed_success_eval + success_eval_std, color='red', alpha=0.1)
+    plt.xlabel("Training Epochs")
+    plt.ylabel("Success Rate")
+    plt.title("Evaluation Success Rate")
+    plt.legend()
+    plt.savefig(os.path.join(output_dir, "evaluation_success_rates.png"))
     plt.close()
 
     print(f"Plots saved to {output_dir}")

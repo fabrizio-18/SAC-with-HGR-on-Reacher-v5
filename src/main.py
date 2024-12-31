@@ -1,6 +1,5 @@
 import argparse
 import numpy as np
-#from policy import Policy
 import gymnasium as gym
 import warnings
 import torch
@@ -11,7 +10,7 @@ from policy import *
 
 def evaluate(env=None, n_episodes=100, render=False):
     agent = Policy()
-    agent.load()
+    agent.load('HER_buffer_model.pt')
     env = NormalizedActions(gym.make("Reacher-v5", max_episode_steps=50))
     if render:
         env = NormalizedActions(gym.make("Reacher-v5", render_mode="human", max_episode_steps=50))
@@ -45,7 +44,7 @@ def evaluate(env=None, n_episodes=100, render=False):
 def train():
     agent = Policy()
     agent.train()
-    agent.save()
+    agent.save('HER_buffer_model.pt')
 
 
 def main():
