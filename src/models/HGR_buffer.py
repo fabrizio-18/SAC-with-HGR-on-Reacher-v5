@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import threading
-from utils import SumSegmentTree, MinSegmentTree
+from utils import SumSegmentTree, MinSegmentTree, LinearSchedule
 
 class HGRReplayBuffer:
     def __init__(self, obs_shape, action_shape, goal_shape, capacity, device, max_episode_steps):
@@ -48,6 +48,7 @@ class HGRReplayBuffer:
         self.alpha = 0.3
         self.beta = 0.3
 
+        self.beta_schedule = LinearSchedule(self.size, 1.0, self.beta)
         self.lock = threading.Lock()
 
     
@@ -83,7 +84,8 @@ class HGRReplayBuffer:
         self.td_of_transition[idx_ep] = (np.ones((rollout_batch_size, self._length_weight)) * self._max_transition_priority)
 
     
-    def sample(self, batch_size):
+    def sample(self, batch_size, step):
+        self.beta = self.beta_schedule.value(step)
         temp_buffers = {}
         with self.lock:
             for key in self.buffers.keys():

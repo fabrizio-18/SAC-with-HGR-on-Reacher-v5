@@ -34,10 +34,10 @@ class Policy(nn.Module):
         #self.buffer = replayBuffer.ReplayBuffer(obs_shape=self.obs_shape, action_shape=self.action_shape, capacity=1500000, device=self.device)
         
         #### if you want to use HER buffer ####
-        self.buffer = HER_buffer.HERReplayBuffer(obs_shape=self.obs_shape, action_shape=self.action_shape, goal_shape=self.goal_shape, capacity=1500000, device=self.device, max_episode_steps=self.max_episode_steps)
+        #self.buffer = HER_buffer.HERReplayBuffer(obs_shape=self.obs_shape, action_shape=self.action_shape, goal_shape=self.goal_shape, capacity=1500000, device=self.device, max_episode_steps=self.max_episode_steps)
         
         #### if you want to use HGR buffer ####
-        #self.buffer = HGR_buffer.HGRReplayBuffer(obs_shape=self.obs_shape, action_shape=self.action_shape, goal_shape=self.goal_shape, capacity=1500000, device=self.device, max_episode_steps=self.max_episode_steps)
+        self.buffer = HGR_buffer.HGRReplayBuffer(obs_shape=self.obs_shape, action_shape=self.action_shape, goal_shape=self.goal_shape, capacity=1500000, device=self.device, max_episode_steps=self.max_episode_steps)
         self.step = 0
         self.env.reset()
         
@@ -138,8 +138,8 @@ class Policy(nn.Module):
         print(f"Training complete.")
         
         #save_plots(rewards, critic_losses, success_rates, episodes, output_dir='simple_buffer_plots')
-        save_plots(rewards, critic_losses, success_rates, episodes, rewards_eval, success_rates_eval, output_dir='HER_buffer_plots')
-        #save_plots(rewards, critic_losses, success_rates, episodes, rewards_eval, success_rates_eval, output_dir='HGR_buffer_plots')
+        #save_plots(rewards, critic_losses, success_rates, episodes, rewards_eval, success_rates_eval, output_dir='HER_buffer_plots')
+        save_plots(rewards, critic_losses, success_rates, episodes, rewards_eval, success_rates_eval, output_dir='HGR_buffer_plots')
 
     def evaluate(self, eval_episodes=3):
         avg_reward = 0

@@ -45,7 +45,7 @@ class SAC():
     
 
     ### Uncomment this method if you are using simple buffer or HER ###
-    def update_critic(self, obs, goal, action, reward, next_obs, done):
+    #def update_critic(self, obs, goal, action, reward, next_obs, done):
         with torch.no_grad():
 
             dist = self.actor(next_obs, goal)
@@ -69,7 +69,7 @@ class SAC():
 
 
     ### Uncomment this method if you're using HGR buffer ###
-    #def update_critic(self, obs, goal, action, reward, next_obs, done, episode_idxs, transitions_idxs, weights, replay_buffer):
+    def update_critic(self, obs, goal, action, reward, next_obs, done, episode_idxs, transitions_idxs, weights, replay_buffer):
         with torch.no_grad():
 
             dist = self.actor(next_obs, goal)
@@ -135,10 +135,10 @@ class SAC():
         #obs, action, reward, next_obs, not_done = replay_buffer.sample(self.batch_size)
 
         #Sampling using the HER_buffer class
-        transitions = replay_buffer.sample(self.batch_size)
+        #transitions = replay_buffer.sample(self.batch_size)
 
         #Sampling using the HGR_buffer class
-        #transitions, episode_idxs, transitions_idxs, weights = replay_buffer.sample(self.batch_size)
+        transitions, episode_idxs, transitions_idxs, weights = replay_buffer.sample(self.batch_size, step)
         
         obs = transitions['obs']
         goal = transitions['goals']
@@ -148,11 +148,11 @@ class SAC():
         done = transitions['dones']
 
         #If you're not using HGR buffer
-        critic_loss = self.update_critic(obs, goal, action, reward, next_obs, done)
+        #critic_loss = self.update_critic(obs, goal, action, reward, next_obs, done)
 
         
         #If you're using HGR buffer
-        #critic_loss = self.update_critic(obs, goal, action, reward, next_obs, done, episode_idxs, transitions_idxs, weights, replay_buffer)
+        critic_loss = self.update_critic(obs, goal, action, reward, next_obs, done, episode_idxs, transitions_idxs, weights, replay_buffer)
 
         if step % self.actor_update_freq == 0:
             self.update_actor(obs, goal)

@@ -8,9 +8,9 @@ torch.autograd.set_detect_anomaly(True)
 from utils import NormalizedActions
 from policy import *
 
-def evaluate(env=None, n_episodes=100, render=False):
+def evaluate(env=None, n_episodes=10, render=False):
     agent = Policy()
-    agent.load('HER_buffer_model.pt')
+    agent.load('HGR_buffer_model.pt')
     env = NormalizedActions(gym.make("Reacher-v5", max_episode_steps=50))
     if render:
         env = NormalizedActions(gym.make("Reacher-v5", render_mode="human", max_episode_steps=50))
@@ -44,7 +44,7 @@ def evaluate(env=None, n_episodes=100, render=False):
 def train():
     agent = Policy()
     agent.train()
-    agent.save('HER_buffer_model.pt')
+    agent.save('HGR_buffer_model.pt')
 
 
 def main():
