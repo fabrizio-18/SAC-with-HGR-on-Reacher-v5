@@ -12,7 +12,7 @@ class Critic(nn.Module):
                 nn.ReLU(inplace=True),
                 nn.Linear(hidden_dim, hidden_dim),
                 nn.ReLU(inplace=True),
-                nn.Linear(hidden_dim, 1) #fc3
+                nn.Linear(hidden_dim, 1)
             ) 
 
         self.Q2 = nn.Sequential(
@@ -20,7 +20,7 @@ class Critic(nn.Module):
             nn.ReLU(inplace=True),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, 1) #fc3
+            nn.Linear(hidden_dim, 1)
         )
         self.apply(self.initialize_weights)
 

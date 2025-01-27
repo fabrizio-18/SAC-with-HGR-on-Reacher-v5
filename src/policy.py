@@ -1,11 +1,10 @@
 import gymnasium as gym
-import os
 import torch
 import numpy as np
 import time
 import torch.nn as nn
 from utils import *
-from models import SAC, replayBuffer, HER_buffer, HGR_buffer
+from models import SAC, HER_buffer, HGR_buffer
 
 
 class Policy(nn.Module):
@@ -14,7 +13,6 @@ class Policy(nn.Module):
         super(Policy, self).__init__()
         set_seed_everywhere(seed)
         self.device = device if device else torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-        self.dir = os.getcwd()
         self.env = NormalizedActions(gym.make("Reacher-v5", render_mode="rgb_array", max_episode_steps=50))
         self.obs_shape = self.env.observation_space.shape[0]
         self.action_shape = self.env.action_space.shape[0]
@@ -29,14 +27,11 @@ class Policy(nn.Module):
         self.eps_dacay = 0.99
         self.sac = SAC.SAC(obs_shape=self.obs_shape, action_shape=self.action_shape, goal_shape=self.goal_shape, device=self.device, 
                            hidden_dim=self.hidden_dim, lr=self.lr, gamma=self.gamma, tau=self.tau, batch_size=self.batch_size)
-        
-        #### if you want to use the simple buffer ####
-        #self.buffer = replayBuffer.ReplayBuffer(obs_shape=self.obs_shape, action_shape=self.action_shape, capacity=1500000, device=self.device)
-        
-        #### if you want to use HER buffer ####
+                
+        ##### if you want to use HER buffer #####
         #self.buffer = HER_buffer.HERReplayBuffer(obs_shape=self.obs_shape, action_shape=self.action_shape, goal_shape=self.goal_shape, capacity=1500000, device=self.device, max_episode_steps=self.max_episode_steps)
         
-        #### if you want to use HGR buffer ####
+        ##### if you want to use HGR buffer #####
         self.buffer = HGR_buffer.HGRReplayBuffer(obs_shape=self.obs_shape, action_shape=self.action_shape, goal_shape=self.goal_shape, capacity=1500000, device=self.device, max_episode_steps=self.max_episode_steps)
         self.step = 0
         self.env.reset()
@@ -73,13 +68,10 @@ class Policy(nn.Module):
                 next_obs, reward, terminated, truncated, info = self.env.step(action)
                 done = terminated or truncated
                 done = float(done)
-                #done_no_max = 0 if step + 1 == self.max_episode_steps else done
 
                 episode_reward += reward
-                #Push the transition in the buffer. To use if you want to use the simple replayBuffer class
-                #self.buffer.push(obs, action, reward, next_obs, done, done_no_max)
 
-                #Storing the transitions of the episode
+                ##### Storing the transitions of the episode #####
                 ep_obs.append(obs.copy())
                 ep_achieved_goals.append([obs[8].copy() + obs[4].copy(), obs[9].copy() + obs[5].copy()])
                 ep_goals.append([obs[4].copy(), obs[5].copy()])
@@ -116,7 +108,7 @@ class Policy(nn.Module):
                 success_rates.append(success_rate)
                 episodes.append(self.step)
 
-                #evaluate agent 
+                ##### Evaluate agent #####
                 if self.step % eval_step == 0:
                     print("Periodic agent evaluation...")
                     success_eval, avg_reward = self.evaluate()
@@ -137,7 +129,6 @@ class Policy(nn.Module):
             self.epsilon *= self.eps_dacay
         print(f"Training complete.")
         
-        #save_plots(rewards, critic_losses, success_rates, episodes, output_dir='simple_buffer_plots')
         #save_plots(rewards, critic_losses, success_rates, episodes, rewards_eval, success_rates_eval, output_dir='HER_buffer_plots')
         save_plots(rewards, critic_losses, success_rates, episodes, rewards_eval, success_rates_eval, output_dir='HGR_buffer_plots')
 
@@ -172,7 +163,7 @@ class Policy(nn.Module):
     
     def save(self, path='model.pt'):
         torch.save({
-            'policy_state_dict': self.state_dict(),  # Save Policy class state
+            'policy_state_dict': self.state_dict(),
             'sac': {
                 'actor_state_dict': self.sac.actor.state_dict(),
                 'critic_state_dict': self.sac.critic.state_dict(),
@@ -180,19 +171,18 @@ class Policy(nn.Module):
                 'actor_optimizer_state_dict': self.sac.actor_optimizer.state_dict(),
                 'critic_optimizer_state_dict': self.sac.critic_optimizer.state_dict(),
                 'log_alpha_optimizer_state_dict': self.sac.log_alpha_optimizer.state_dict(),
-                'log_alpha': self.sac.log_alpha.detach().cpu().numpy(),  # Save log_alpha as a plain value
+                'log_alpha': self.sac.log_alpha.detach().cpu().numpy(), 
             },
-            'step': self.step,  # Save current training step
-            'epsilon': self.epsilon  # Save epsilon value
+            'step': self.step, 
+            'epsilon': self.epsilon
         }, path)
         print(f"Model and components saved to {path}")
 
 
     def load(self, path='model.pt'):
         checkpoint = torch.load(path, map_location=self.device)
-        self.load_state_dict(checkpoint['policy_state_dict'])  # Load Policy class state
+        self.load_state_dict(checkpoint['policy_state_dict']) 
 
-        # Load SAC components
         self.sac.actor.load_state_dict(checkpoint['sac']['actor_state_dict'])
         self.sac.critic.load_state_dict(checkpoint['sac']['critic_state_dict'])
         self.sac.target_critic.load_state_dict(checkpoint['sac']['target_critic_state_dict'])
@@ -201,7 +191,6 @@ class Policy(nn.Module):
         self.sac.log_alpha_optimizer.load_state_dict(checkpoint['sac']['log_alpha_optimizer_state_dict'])
         self.sac.log_alpha = torch.tensor(checkpoint['sac']['log_alpha'], device=self.device, requires_grad=True)
 
-        # Restore training state
         self.step = checkpoint['step']
         self.epsilon = checkpoint['epsilon']
 

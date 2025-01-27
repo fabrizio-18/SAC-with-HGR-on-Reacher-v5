@@ -57,7 +57,8 @@ class HERReplayBuffer:
         episode_idxs = np.random.randint(0, current_episodes, batch_size)
         t_samples = np.random.randint(0, self.T, size=batch_size)
         transitions = {key: buffers[key][episode_idxs, t_samples].copy() for key in buffers.keys()}
-        #HER indices
+        
+        ##### HER indices #####
         her_indices = np.where(np.random.uniform(size=batch_size) < self.future_p)
         future_offset = np.random.uniform(size=batch_size) * (self.T - t_samples)
         future_offset = future_offset.astype(int)
@@ -72,16 +73,16 @@ class HERReplayBuffer:
         transitions = {k: transitions[k].reshape(batch_size, *transitions[k].shape[1:]) for k in transitions.keys()}
         return transitions
     
-    def reward_fun(self, achieved_goal, action, desired_goal):  # vectorized
+    def reward_fun(self, achieved_goal, action, desired_goal): 
         achieved_goal = np.array(achieved_goal) 
         desired_goal = np.array(desired_goal)    
         action = np.array(action) 
         distance = np.linalg.norm(achieved_goal - desired_goal, axis=-1)
         
         rewards = np.where(
-            distance < 0.05,  # Condition
-            -0.1 * (np.linalg.norm(action, axis=-1) ** 2),  # Reward for small distance
-            -distance - 0.1 * (np.linalg.norm(action, axis=-1) ** 2)  # Reward for large distance
+            distance < 0.05,  #Condition
+            -0.1 * (np.linalg.norm(action, axis=-1) ** 2),  #for small distance
+            -distance - 0.1 * (np.linalg.norm(action, axis=-1) ** 2)  #for large distance
         )
 
         return rewards

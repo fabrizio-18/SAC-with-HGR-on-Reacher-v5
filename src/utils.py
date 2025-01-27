@@ -357,7 +357,7 @@ def save_plots(rewards, critic_losses, success_rates, episodes, rewards_eval, su
 
 
 def plot_from_npy(output_dir='simple_buffer_plots', smooth_window=300):
-    # Load data from .npy files
+    #Load data from .npy files
     rewards = np.load(os.path.join(output_dir, "rewards.npy"))
     critic_losses = np.load(os.path.join(output_dir, "critic_losses.npy"))
     success_rates = np.load(os.path.join(output_dir, "success_rates.npy"))
@@ -369,12 +369,12 @@ def plot_from_npy(output_dir='simple_buffer_plots', smooth_window=300):
         std = np.array([np.std(data[max(0, i - window + 1):i + 1]) for i in range(len(data))])
         return smoothed, std
 
-    # Smooth data
+    #Smooth data
     smoothed_rewards, reward_std = smooth(rewards, smooth_window)
     smoothed_losses, loss_std = smooth(critic_losses, smooth_window)
     smoothed_success, success_std = smooth(success_rates, smooth_window)
 
-    # Plot rewards
+    #Plot rewards
     plt.figure()
     plt.plot(episodes, rewards, label="Episode Reward", alpha=0.2, color='blue')
     plt.plot(episodes, smoothed_rewards, label="Moving Average Reward", color='blue')
@@ -386,7 +386,7 @@ def plot_from_npy(output_dir='simple_buffer_plots', smooth_window=300):
     plt.savefig(os.path.join(output_dir, "episode_rewards.png"))
     plt.close()
 
-    # Plot critic losses
+    #Plot critic losses
     plt.figure()
     plt.plot(episodes, critic_losses, label="Critic Loss", alpha=0.2, color='orange')
     plt.plot(episodes, smoothed_losses, label="Moving Average Loss", color='orange')
@@ -398,7 +398,7 @@ def plot_from_npy(output_dir='simple_buffer_plots', smooth_window=300):
     plt.savefig(os.path.join(output_dir, "critic_loss.png"))
     plt.close()
 
-    # Plot success rates
+    #Plot success rates
     plt.figure()
     plt.plot(episodes, success_rates, label="Success Rate", alpha=0.2, color='green')
     plt.plot(episodes, smoothed_success, label="Moving Average Success Rate", color='green')
@@ -437,3 +437,60 @@ class LinearSchedule(object):
         """See Schedule.value"""
         fraction = min(float(t) / self.schedule_timesteps, 1.0)
         return self.initial_p + fraction * (self.final_p - self.initial_p)
+    
+
+
+def plot_success_rates(her_file, hgr_file, total_epochs=30000, eval_interval=1):
+    
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    # Load success rate data
+    her_success = np.load(her_file)
+    hgr_success = np.load(hgr_file)
+
+    # Ensure both arrays have consistent lengths
+    min_length = min(len(her_success), len(hgr_success))
+
+    # Truncate arrays to the shortest length
+    her_success = her_success[:min_length]
+    hgr_success = hgr_success[:min_length]
+
+    # Compute mean and std if data has multiple trials
+    if her_success.ndim > 1:
+        her_mean = np.mean(her_success, axis=0)
+        her_std = np.std(her_success, axis=0)
+    else:
+        her_mean = her_success
+        her_std = None
+
+    if hgr_success.ndim > 1:
+        hgr_mean = np.mean(hgr_success, axis=0)
+        hgr_std = np.std(hgr_success, axis=0)
+    else:
+        hgr_mean = hgr_success
+        hgr_std = None
+
+    # Generate x-axis dynamically to match the shorter array
+    x_axis = np.arange(0, min_length * eval_interval, eval_interval)
+
+    # Plot success rates
+    plt.figure(figsize=(12, 6))
+    plt.plot(x_axis, her_mean, label='HER', color='blue')
+    plt.plot(x_axis, hgr_mean, label='HGR', color='green')
+
+    # Plot shaded regions for standard deviation (if available)
+    if her_std is not None:
+        plt.fill_between(x_axis, her_mean - her_std, her_mean + her_std, color='blue', alpha=0.2)
+    if hgr_std is not None:
+        plt.fill_between(x_axis, hgr_mean - hgr_std, hgr_mean + hgr_std, color='green', alpha=0.2)
+
+    # Add labels, title, and legend
+    plt.xlabel('Epochs')
+    plt.ylabel('Success Rate')
+    plt.title('Success Rate Comparison: HER vs HGR')
+    plt.legend()
+    plt.grid(False)
+
+    # Show the plot
+    plt.show()

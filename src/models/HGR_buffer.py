@@ -37,7 +37,7 @@ class HGRReplayBuffer:
                 self._idx_state_and_future[_idx] = [i, j + 1]
                 _idx += 1
 
-        it_capacity = 1  # Iterator for computing capacity of buffer
+        it_capacity = 1  #Iterator for computing capacity of buffer
         while it_capacity < self.size:
             it_capacity *= 2
         self._it_sum = SumSegmentTree(it_capacity)
@@ -91,7 +91,7 @@ class HGRReplayBuffer:
             for key in self.buffers.keys():
                 temp_buffers[key] = self.buffers[key][:self.current_size]
 
-        ### Computing episodes indices ### 
+        ##### Computing episodes indices ##### 
         episode_idxs, weights_episodes = self._sample_episode_indices(batch_size)
 
         transitions, weights_transitions, transitions_idxs = self.her_sampler(temp_buffers, episode_idxs, batch_size)
@@ -110,22 +110,22 @@ class HGRReplayBuffer:
         future_t = np.zeros(batch_size, dtype=np.int64)
 
         for i in range(batch_size):
-            # Get weights for transitions within the sampled episode
+            ##### Weights for transitions within the sampled episode #####
             weight_prob = self.weight_of_transition[episode_idxs[i]] / self.weight_of_transition[episode_idxs[i]].sum()
 
-            # Sample a transition using the weights
+            ##### Sample a transition using the weights #####
             idx = np.random.choice(len(weight_prob), p=weight_prob)
             transition_idxs[i] = idx
             t_samples[i], future_t[i] = self._idx_state_and_future[idx]
 
-            # Compute importance sampling weights for transitions
+            ##### IS weights for transitions #####
             weights_transitions[i] = (self.weight_of_transition[episode_idxs[i], idx] * self._length_weight) ** (-self.beta)
 
-        # Extract transitions using the sampled states and futures
+        ##### Extract transitions using the sampled states and futures #####
         for key in buffers.keys():
             transitions[key] = buffers[key][episode_idxs, t_samples].copy()
         
-        # HER indices
+        ##### HER indices #####
         her_indices = np.where(np.random.uniform(size=batch_size) < self.future_p)
 
         future_achieved_goals = buffers['achieved_goals'][episode_idxs[her_indices], future_t[her_indices]] 
@@ -139,19 +139,13 @@ class HGRReplayBuffer:
     def _sample_episode_indices(self, batch_size):
         """
         Sample episode indices using proportional prioritization.
-        Args:
-            batch_size: Number of episodes to sample.
-            beta: Importance sampling weight adjustment.
-        Returns:
-            Episode indices and importance sampling weights.
         """
         episode_idxs = []
         weights = []
 
-        # Total priority sum
+        ##### Total priority sum #####
         p_total = self._it_sum.sum(0, self.current_size)
 
-        # Sample episodes
         for _ in range(batch_size):
             mass = np.random.uniform() * p_total
             idx = self._it_sum.find_prefixsum_idx(mass)
@@ -171,30 +165,30 @@ class HGRReplayBuffer:
         priorities = priorities.detach().numpy()
         for ep_idx, priority_of_transition, transition_idx in zip(ep_idxs, priorities, transition_idxs):
 
-            # Update weight for transitions in 1 episode
+            ##### Update weight for transitions in 1 episode #####
             self.weight_of_transition[ep_idx, transition_idx] = priority_of_transition ** self.alpha
             self.td_of_transition[ep_idx, transition_idx] = priority_of_transition
 
-            # Update weight for all episodes
+            ##### Update weight for all episodes #####
             priority_of_episode = self.td_of_transition[ep_idx].mean()
             self._it_sum[ep_idx] = priority_of_episode ** self.alpha
             self._it_min[ep_idx] = priority_of_episode ** self.alpha
 
-            # self._max_episode_priority = max(self._max_episode_priority, _priority_of_episode)
+            ##### Update maximal transition priority #####
             self._max_transition_priority = max(self._max_transition_priority, priority_of_transition)
 
 
     
-    def reward_fun(self, achieved_goal, action, desired_goal):  # vectorized
+    def reward_fun(self, achieved_goal, action, desired_goal):
         achieved_goal = np.array(achieved_goal) 
         desired_goal = np.array(desired_goal)    
         action = np.array(action) 
         distance = np.linalg.norm(achieved_goal - desired_goal, axis=-1)
         
         rewards = np.where(
-            distance < 0.05,  # Condition
-            -0.1 * (np.linalg.norm(action, axis=-1) ** 2),  # Reward for small distance
-            -distance - 0.1 * (np.linalg.norm(action, axis=-1) ** 2)  # Reward for large distance
+            distance < 0.05,  #Condition
+            -0.1 * (np.linalg.norm(action, axis=-1) ** 2),  #for small distance
+            -distance - 0.1 * (np.linalg.norm(action, axis=-1) ** 2)  #for large distance
         )
 
         return rewards

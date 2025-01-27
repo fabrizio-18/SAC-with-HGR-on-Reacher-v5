@@ -44,7 +44,7 @@ class SAC():
     
     
 
-    ### Uncomment this method if you are using simple buffer or HER ###
+    ##### Uncomment this method if you are using HER #####
     #def update_critic(self, obs, goal, action, reward, next_obs, done):
         with torch.no_grad():
 
@@ -60,7 +60,7 @@ class SAC():
         current_Q1, current_Q2 = self.critic(obs, action, goal)
         critic_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(current_Q2, target_Q)
 
-        #Update Critic
+        ##### Update Critic #####
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.critic_optimizer.step()
@@ -68,7 +68,7 @@ class SAC():
         return critic_loss.detach()
 
 
-    ### Uncomment this method if you're using HGR buffer ###
+    ##### Uncomment this method if you're using HGR buffer #####
     def update_critic(self, obs, goal, action, reward, next_obs, done, episode_idxs, transitions_idxs, weights, replay_buffer):
         with torch.no_grad():
 
@@ -92,7 +92,7 @@ class SAC():
 
         priorities = (target_Q - torch.min(current_Q1, current_Q2)).abs()
         
-        #Update Critic
+        ##### Update Critic #####
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.critic_optimizer.step()
@@ -111,12 +111,12 @@ class SAC():
 
         actor_loss = (self.alpha.detach() * log_prob - actor_Q).mean()
         
-        #Update Actor
+        ##### Update Actor #####
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
         self.actor_optimizer.step()
 
-        #Update alpha
+        ##### Update alpha #####
         self.log_alpha_optimizer.zero_grad()
         alpha_loss = (-self.alpha * (log_prob + self.target_entropy).detach()).mean()
 
@@ -131,13 +131,10 @@ class SAC():
             
     
     def update(self, replay_buffer, step):
-        #Sampling using the simple replayBuffer class
-        #obs, action, reward, next_obs, not_done = replay_buffer.sample(self.batch_size)
-
-        #Sampling using the HER_buffer class
+        ##### Sampling using the HER_buffer class #####
         #transitions = replay_buffer.sample(self.batch_size)
 
-        #Sampling using the HGR_buffer class
+        ##### Sampling using the HGR_buffer class #####
         transitions, episode_idxs, transitions_idxs, weights = replay_buffer.sample(self.batch_size, step)
         
         obs = transitions['obs']
@@ -147,11 +144,11 @@ class SAC():
         reward = transitions['rewards']
         done = transitions['dones']
 
-        #If you're not using HGR buffer
+        ##### If you're using HER buffer #####
         #critic_loss = self.update_critic(obs, goal, action, reward, next_obs, done)
 
         
-        #If you're using HGR buffer
+        ##### If you're using HGR buffer #####
         critic_loss = self.update_critic(obs, goal, action, reward, next_obs, done, episode_idxs, transitions_idxs, weights, replay_buffer)
 
         if step % self.actor_update_freq == 0:

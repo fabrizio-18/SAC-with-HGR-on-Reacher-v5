@@ -5,10 +5,12 @@ import warnings
 import torch
 warnings.filterwarnings("ignore")
 torch.autograd.set_detect_anomaly(True)
-from utils import NormalizedActions
+from utils import NormalizedActions, plot_success_rates
 from policy import *
 
-def evaluate(env=None, n_episodes=10, render=False):
+
+#plot_success_rates('HER_buffer_plots/success_rates.npy', 'HGR_buffer_plots/success_rates.npy')
+def evaluate(env=None, n_episodes=1000, render=False):
     agent = Policy()
     agent.load('HGR_buffer_model.pt')
     env = NormalizedActions(gym.make("Reacher-v5", max_episode_steps=50))
@@ -44,7 +46,7 @@ def evaluate(env=None, n_episodes=10, render=False):
 def train():
     agent = Policy()
     agent.train()
-    agent.save('HGR_buffer_model.pt')
+    agent.save()
 
 
 def main():
