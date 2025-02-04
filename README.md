@@ -19,7 +19,7 @@ git clone https://github.com/fabrizio-18/SAC-with-HGR-on-Reacher-v5.git
 ```
 2. Navigate into the repository:
 ```
-cd SAC-with-HGR-on-Reacher-v5
+cd <path-to>/SAC-with-HGR-on-Reacher-v5
 ```
 3. Train and evaluate the model:
 ```
