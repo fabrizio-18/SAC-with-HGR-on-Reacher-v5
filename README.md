@@ -36,4 +36,4 @@ You can switch between standard Hindsight Experience Replay (HER) and the Hindsi
 
 ## 🎥 Video Results  
 
-![Demo](video.gif)
+![Demo](src/video.gif)
