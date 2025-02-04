@@ -1,10 +1,12 @@
 # SAC + HGR on Reacher-v5  
 
-This repository implements the approach described in [*Hindsight Goal Ranking on Replay Buffer for Sparse Reward Environment*](https://arxiv.org/abs/2110.15043) by Tung M. Luu and Chang D. Yoo. 
-
-The goal is to apply Hindsight Goal Ranking (HGR) to improve learning using the Soft Actor-Critic (SAC) algorithm in the [Reacher-v5](https://gymnasium.farama.org/environments/mujoco/reacher/) environment from Gymnasium.  
+### LM: Artificial Intelligence & Robotics - Reinforcement Learning Project assignment 
+Sapienza University of Rome, Italy  
 
 ## 📌 Introduction  
+This repository implements the approach described in [*Hindsight Goal Ranking on Replay Buffer for Sparse Reward Environment*](https://arxiv.org/abs/2110.15043) by Tung M. Luu and Chang D. Yoo. 
+
+The goal is to apply Hindsight Goal Ranking (HGR) to improve learning using the Soft Actor-Critic (SAC) algorithm in the [Reacher-v5](https://gymnasium.farama.org/environments/mujoco/reacher/) environment from Gymnasium.
 
 Reinforcement learning in sparse reward environments is challenging since the agent rarely receives meaningful feedback.  
 Hindsight Experience Replay (HER) overcomes the sample inefficiency problem in sparse reward environments: the idea is to relabel the goal of existing experiences in the replay buffer such that the episode is successful or in the future steps it is going to be successful.  
