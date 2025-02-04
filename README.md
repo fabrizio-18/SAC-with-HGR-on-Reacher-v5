@@ -30,8 +30,8 @@ You can switch between standard Hindsight Experience Replay (HER) and the Hindsi
 ## 📊Results
 | Algorithm  | Avg.Success Rate|
 |------------|-------------|
-| SAC + HER  | 0.9907%         |
-| SAC + HGR  | 0.9913%         |
+| SAC + HER  | 99.07%         |
+| SAC + HGR  | 99.13%         |
 
 
 ## 🎥 Video Results  
