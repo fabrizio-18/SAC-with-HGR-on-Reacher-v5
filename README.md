@@ -1,6 +1,6 @@
 # SAC + HGR on Reacher-v5  
 
-### LM: Artificial Intelligence & Robotics - Reinforcement Learning Project assignment 
+### LM: Artificial Intelligence & Robotics - Reinforcement Learning Project
 Sapienza University of Rome, Italy  
 
 ## 📌 Introduction  
