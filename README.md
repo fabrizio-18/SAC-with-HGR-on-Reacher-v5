@@ -2,6 +2,7 @@
 
 ### LM: Artificial Intelligence & Robotics - Reinforcement Learning Project
 [Fabrizio Italia](https://github.com/fabrizio-18)
+
 Sapienza University of Rome, Italy  
 
 ## 📌 Introduction  
